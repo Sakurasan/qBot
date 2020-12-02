@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -64,9 +65,10 @@ func browser() {
 	doc, _ := goquery.NewDocumentFromResponse(result)
 	// id="separatorline"
 	doc.Find("div[class=\"boardnav\"]").Find("div[class=\"bm_c\"]").Find("tbody").Eq(4).Each(func(i int, doc *goquery.Selection) {
-		title := doc.Find("tr").Text()
-		// id, _ := doc.Find("a[class=\"new\"]").Attr("id")
-		fmt.Println(title)
+		title := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Text()
+		href, _ := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Attr("href")
+		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
+		fmt.Println(title, id[1])
 	})
 
 }
