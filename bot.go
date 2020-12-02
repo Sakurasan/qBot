@@ -49,7 +49,22 @@ func main() {
 	rsp, err := qc.Login()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
+	fmt.Printf("使用协议: %v", func() string {
+		switch client.SystemDeviceInfo.Protocol {
+		case client.IPad:
+			return "iPad"
+		case client.AndroidPhone:
+			return "Android Phone"
+		case client.AndroidWatch:
+			return "Android Watch"
+		case client.MacOS:
+			return "MacOS"
+		}
+		return "未知"
+	}())
+
 	for {
 		if !rsp.Success {
 			switch rsp.Error {
