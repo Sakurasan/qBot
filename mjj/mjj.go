@@ -27,6 +27,7 @@ var (
 	}
 	url_hostloc = "https://www.hostloc.com/forum.php?mod=forumdisplay&fid=45&filter=author&orderby=dateline"
 	MJJlist     = list.New()
+	treg        = regexp.MustCompile(`<tbody id="normalthread_(.*)</tbody>`)
 )
 
 func initlist() {
@@ -62,13 +63,33 @@ func browser() {
 	if err != nil {
 		log.Println(err)
 	}
-	doc, _ := goquery.NewDocumentFromResponse(result)
+	if result.StatusCode != http.StatusOK {
+		fmt.Println(result.StatusCode, result.Status)
+		return
+	}
+	// bodyReader := bufio.NewReader(result.Body)
+	// bodyReader
+	// ts:= treg.FindAllStringSubmatch(bodyReader.)
+
+	doc, err := goquery.NewDocumentFromResponse(result)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	// id="separatorline"
-	doc.Find("div[class=\"boardnav\"]").Find("div[class=\"bm_c\"]").Find("tbody").Eq(4).Each(func(i int, doc *goquery.Selection) {
+	ndoc := doc.Find("div[class=\"boardnav\"]").Find("div[class=\"bm_c\"]")
+	// ndoc.Find("tbody").Each(func(i int, doc *goquery.Selection) {
+	// 	title := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Text()
+	// 	href, _ := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Attr("href")
+	// 	id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
+	// 	fmt.Println(title, id)
+	// })
+	fmt.Println(len(ndoc.Find("tbody").Nodes))
+	ndoc.Find("tbody").Slice(4, 9).Each(func(i int, doc *goquery.Selection) {
 		title := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Text()
 		href, _ := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Attr("href")
 		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
-		fmt.Println(title, id[1])
+		fmt.Println(title, id)
 	})
 
 }
