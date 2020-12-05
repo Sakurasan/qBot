@@ -39,3 +39,5 @@ remote-debugging-port chrome-debug工具的端口(golang chromepd 默认端口�
 
 
 cmd /c "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"  --remote-debugging-port=9222 --no-sandbox --disable-plugins --remote-debugging-address=0.0.0.0
+
+https://www.dazhuanlan.com/2019/10/25/5db209ebbcc11/
