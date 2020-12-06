@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	mjjurl = "https://hostloc.com/forum.php?mod=forumdisplay&fid=45&filter=author&orderby=dateline"
+	mjjphoneurl = `https://hostloc.com/forum.php?mod=forumdisplay&fid=45&orderby=dateline&mobile=2`
+	mjjurl      = "https://hostloc.com/forum.php?mod=forumdisplay&fid=45&filter=author&orderby=dateline"
 
 	headers = map[string]string{
 		"Accept-Encoding":           `gzip, deflate, br`,
@@ -91,5 +92,56 @@ func browser() {
 		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
 		fmt.Println(title, id)
 	})
+
+}
+
+func browser2() {
+	tr := &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: time.Duration(10) * time.Second,
+		}).Dial,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+		DisableKeepAlives: false,
+		MaxIdleConns:      10,
+	}
+	client := &http.Client{Transport: tr, Timeout: 10 * time.Second}
+
+	req, _ := http.NewRequest(http.MethodGet, mjjphoneurl, nil)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	req.Header.Set("User-Agent", ipua)
+
+	result, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+	}
+	if result.StatusCode != http.StatusOK {
+		fmt.Println(result.StatusCode, result.Status)
+		return
+	}
+	// bodyReader := bufio.NewReader(result.Body)
+	// bodyReader
+	// ts:= treg.FindAllStringSubmatch(bodyReader.)
+
+	doc, err := goquery.NewDocumentFromResponse(result)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	// /html/body/div[1]/ul/li[1]
+	ndoc := doc.Find("div[class=\"threadlist\"]").Find("ul")
+	// ndoc.Find("tbody").Each(func(i int, doc *goquery.Selection) {
+	// 	title := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Text()
+	// 	href, _ := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Attr("href")
+	// 	id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
+	// 	fmt.Println(title, id)
+	// })
+	ndoc.Find("li").Each(func(i int, doc *goquery.Selection) {
+		href, _ := doc.Find("a").Attr("href")
+		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
+		fmt.Println(doc.Find("a").Text(), id[1])
+	})
+	// fmt.Println(ndoc.Html())
 
 }
