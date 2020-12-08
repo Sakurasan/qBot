@@ -1,8 +1,10 @@
 package mjj
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"regexp"
 	"strings"
@@ -19,7 +21,7 @@ var (
 	ua   = `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36`
 )
 
-func cdpmjjex() {
+func cdpex() {
 
 	ctx, cancel := chromedp.NewContext(
 		context.Background(),
@@ -44,7 +46,7 @@ func cdpmjjex() {
 	}
 }
 
-func cdpmjjmobile() (map[string]string, error) {
+func MjjCdpMobile() ([][]string, error) {
 	options := chromedp.DefaultExecAllocatorOptions[:]
 	myoptions := []chromedp.ExecAllocatorOption{
 		// chromedp.Flag("headless", false),
@@ -77,19 +79,22 @@ func cdpmjjmobile() (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var m = make(map[string]string, 8)
+	// var m = make(map[string]string, 8)
+	var newslist = make([][]string, 8)
 	doc.Find(`li>a`).Each(func(i int, doc *goquery.Selection) {
-		title := doc.Text()
+		title := doc.Contents().FilterFunction(func(i int, s *goquery.Selection) bool {
+			return !s.Is("span")
+		}).Text()
 		href, _ := doc.Attr("href")
 		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
 		if len(id) == 2 && id[1] != "" {
-			m[id[1]] = title
+			newslist[i] = []string{id[1], title}
 		}
 	})
-	return m, nil
+	return newslist, nil
 }
 
-func cdpmjj() {
+func MjjCdp() {
 
 	ctx, cancel := chromedp.NewContext(
 		context.Background(),
@@ -115,32 +120,6 @@ func cdpmjj() {
 	}
 }
 
-// func handless() {
-// 	var nodes []*cdp.Node
-// 	options := []chromedp.ExecAllocatorOption{
-// 		chromedp.NoSandbox,
-// 		// chromedp.UserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 13_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/7.0.13(0x17000d2a) NetType/WIFI Language/zh_CN"),
-// 	}
-// 	options = append(options, chromedp.DefaultExecAllocatorOptions[:]...)
-// 	c, cc := chromedp.NewExecAllocator(context.Background(), options...)
-// 	defer cc()
-// 	ctx, cancel := chromedp.NewContext(c)
-// 	defer cancel()
-
-// 	err := chromedp.Run(ctx, )
-// 	if err != nil {
-// 		fmt.Println(err)
-// 		return
-// 	}
-// 	for _, node := range nodes {
-// 		data, _ := node.MarshalJSON()
-// 		fmt.Println(string(data))
-// 		// fmt.Println(node.Children[0].NodeValue)
-
-// 	}
-
-// }
-
 func mjjactions(datalist *string) chromedp.Tasks {
 	return chromedp.Tasks{
 		chromedp.Emulate(device.IPhoneXR),
@@ -148,4 +127,24 @@ func mjjactions(datalist *string) chromedp.Tasks {
 		chromedp.WaitVisible(`#select_a`, chromedp.ByID),
 		chromedp.OuterHTML(`html`, datalist),
 	}
+}
+
+func Localmobile() {
+	bytedata, err := ioutil.ReadFile("/Users/nh/Code/Go/src/qBot/test/test.html")
+	if err != nil {
+		fmt.Println(err)
+		panic("找不到文件")
+	}
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewReader(bytedata))
+	doc.Find(`li>a`).Not(`span`).Each(func(i int, doc *goquery.Selection) {
+		title := doc.Contents().FilterFunction(func(i int, s *goquery.Selection) bool {
+			return !s.Is("span")
+		}).Text()
+		href, _ := doc.Attr("href")
+		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
+		if len(id) == 2 && id[1] != "" {
+			fmt.Println(id[1], title)
+		}
+	})
+
 }

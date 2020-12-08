@@ -87,6 +87,7 @@ func browser() {
 	// })
 	fmt.Println(len(ndoc.Find("tbody").Nodes))
 	ndoc.Find("tbody").Slice(4, 9).Each(func(i int, doc *goquery.Selection) {
+		fmt.Println(i)
 		title := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Text()
 		href, _ := doc.Find("tr").Find("th[class=\"new\"]").Find("a[class=\"s xst\"]").Attr("href")
 		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)

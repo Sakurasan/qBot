@@ -5,34 +5,34 @@ import (
 	"testing"
 )
 
-func Test_cdpmjj(t *testing.T) {
+func Test_MjjCdp(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
 		// TODO: Add test cases.
 		{
-			name: "cdpmjj",
+			name: "MjjCdp",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cdpmjj()
+			MjjCdp()
 		})
 	}
 }
 
-func Test_cdpmjjmobile(t *testing.T) {
+func Test_MjjCdpMobile(t *testing.T) {
 	tests := []struct {
 		name string
 		// want    map[string]string
 		// wantErr bool
 	}{
 		// TODO: Add test cases.
-		{name: "cdpmjjmobile"},
+		{name: "MjjCdpMobile"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := cdpmjjmobile()
+			got, err := MjjCdpMobile()
 			if err != nil {
 				t.Errorf("cdpmjjmobile() error = %v", err)
 				return
@@ -40,7 +40,21 @@ func Test_cdpmjjmobile(t *testing.T) {
 			// if !reflect.DeepEqual(got, tt.want) {
 			// 	t.Errorf("cdpmjjmobile() = %v, want %v", got, tt.want)
 			// }
-			fmt.Printf("%+v", got)
+			fmt.Printf("%+v", got[0][0])
+		})
+	}
+}
+
+func TestLocalmobile(t *testing.T) {
+	tests := []struct {
+		name string
+	}{
+		// TODO: Add test cases.
+		{name: "Localmobile"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Localmobile()
 		})
 	}
 }
