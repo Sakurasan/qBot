@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"qBot/pkg/config"
 	"regexp"
 	"strings"
 	"time"
@@ -54,13 +55,25 @@ func MjjCdpMobile() ([][]string, error) {
 		// chromedp.UserAgent(ipua),
 	}
 	options = append(options, myoptions[:]...)
-	ctx, cc := chromedp.NewExecAllocator(context.Background(), options...)
-	defer cc()
 
-	ctx, _ = chromedp.NewContext(
+	var (
+		ctx    context.Context
+		cc     context.CancelFunc
+		cancel context.CancelFunc
+	)
+	if config.GlobalConfig.GetString("devToolWsUrl") != "" {
+		ctx, cc = chromedp.NewRemoteAllocator(context.Background(), config.GlobalConfig.GetString("devToolWsUrl"))
+		defer cc()
+	} else {
+		ctx, cc = chromedp.NewExecAllocator(context.Background(), options...)
+		defer cc()
+	}
+
+	ctx, cancel = chromedp.NewContext(
 		ctx,
 		// chromedp.WithLogf(log.Printf),
 	)
+	defer cancel()
 	tctx, tcancel := context.WithTimeout(
 		ctx, 15*time.Second,
 	)
@@ -85,6 +98,8 @@ func MjjCdpMobile() ([][]string, error) {
 		title := doc.Contents().FilterFunction(func(i int, s *goquery.Selection) bool {
 			return !s.Is("span")
 		}).Text()
+		title = strings.ReplaceAll(title, " ", "")
+		title = strings.ReplaceAll(title, "\n", "")
 		href, _ := doc.Attr("href")
 		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
 		if len(id) == 2 && id[1] != "" {
@@ -130,7 +145,7 @@ func mjjactions(datalist *string) chromedp.Tasks {
 }
 
 func Localmobile() {
-	bytedata, err := ioutil.ReadFile("/Users/nh/Code/Go/src/qBot/test/test.html")
+	bytedata, err := ioutil.ReadFile("../../test/mobile.html")
 	if err != nil {
 		fmt.Println(err)
 		panic("找不到文件")
@@ -140,6 +155,8 @@ func Localmobile() {
 		title := doc.Contents().FilterFunction(func(i int, s *goquery.Selection) bool {
 			return !s.Is("span")
 		}).Text()
+		title = strings.ReplaceAll(title, " ", "")
+		title = strings.ReplaceAll(title, "\n", "")
 		href, _ := doc.Attr("href")
 		id := regexp.MustCompile(`&tid=(.*?)&`).FindStringSubmatch(href)
 		if len(id) == 2 && id[1] != "" {

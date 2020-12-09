@@ -29,7 +29,11 @@ func main() {
 		qc.RefreshList()
 		c.String(200, "LastOrder:%s\n", bot.LastOrder)
 	})
-	r.Run()
+	port := ":9999"
+	if config.GlobalConfig.GetString("port") != "" {
+		port = config.GlobalConfig.GetString("port")
+	}
+	r.Run(port)
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
 	<-ch

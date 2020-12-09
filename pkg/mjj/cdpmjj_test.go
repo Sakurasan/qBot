@@ -2,6 +2,8 @@ package mjj
 
 import (
 	"fmt"
+	"qBot/pkg/config"
+	"strings"
 	"testing"
 )
 
@@ -22,6 +24,7 @@ func Test_MjjCdp(t *testing.T) {
 }
 
 func Test_MjjCdpMobile(t *testing.T) {
+	config.Init()
 	tests := []struct {
 		name string
 		// want    map[string]string
@@ -40,7 +43,9 @@ func Test_MjjCdpMobile(t *testing.T) {
 			// if !reflect.DeepEqual(got, tt.want) {
 			// 	t.Errorf("cdpmjjmobile() = %v, want %v", got, tt.want)
 			// }
-			fmt.Printf("%+v", got[0][0])
+			for _, v := range got {
+				fmt.Println(strings.ReplaceAll(strings.ReplaceAll(v[1], " ", ""), "\n", ""), v[0])
+			}
 		})
 	}
 }

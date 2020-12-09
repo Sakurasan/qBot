@@ -2,3 +2,5 @@
 *.exe
 qBot
 qBot.yaml
+*.log
+*.tgz
