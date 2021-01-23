@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"qBot/pkg/bot"
@@ -11,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// var msgchan = make(chan string, 100)
+
 func main() {
 	config.Init()
 	qc.Init()
@@ -19,7 +22,7 @@ func main() {
 	go func() {
 		for {
 			bot.Run()
-			time.Sleep(10 * time.Second)
+			time.Sleep(15 * time.Second)
 		}
 	}()
 
@@ -29,6 +32,10 @@ func main() {
 		qc.RefreshList()
 		c.String(200, "LastOrder:%s\n", bot.LastOrder)
 	})
+	r.GET("/send", func(c *gin.Context) {
+		msg, _ := c.Params.Get("msg")
+		qc.RadioNews("MiraiGo " + msg)
+	})
 	port := ":9999"
 	if config.GlobalConfig.GetString("port") != "" {
 		port = config.GlobalConfig.GetString("port")
@@ -37,5 +44,5 @@ func main() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
 	<-ch
-
+	log.Println("AWSL")
 }

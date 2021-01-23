@@ -190,8 +190,16 @@ func Login() {
 func RadioNews(msg string) {
 	for _, v := range MyGroupID {
 		if _, ok := GroupMap[int64(v)]; ok {
-			Bot.SendGroupMessage(int64(v), &message.SendingMessage{
+			ret := Bot.SendGroupMessage(int64(v), &message.SendingMessage{
 				Elements: []message.IMessageElement{message.NewText(msg)}})
+			if ret == nil || ret.Id == -1 {
+				log.Println("群消息发送失败 message-id", ret.Id,
+					"internal-id", ret.InternalId,
+					"group", ret.GroupCode,
+					"group-name", ret.GroupName,
+					"sender", ret.Sender,
+					"time", ret.Time)
+			}
 		}
 	}
 }
