@@ -3,6 +3,7 @@ package qc
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"image"
 	"io/ioutil"
@@ -187,7 +188,7 @@ func Login() {
 }
 
 // RadioNews 广播群消息
-func RadioNews(msg string) {
+func RadioNews(msg string) error {
 	for _, v := range MyGroupID {
 		if _, ok := GroupMap[int64(v)]; ok {
 			ret := Bot.SendGroupMessage(int64(v), &message.SendingMessage{
@@ -199,9 +200,11 @@ func RadioNews(msg string) {
 					"group-name", ret.GroupName,
 					"sender", ret.Sender,
 					"time", ret.Time)
+				return errors.New(fmt.Sprintf("%d", ret.Id))
 			}
 		}
 	}
+	return nil
 }
 
 // RefreshList 刷新联系人
@@ -221,4 +224,10 @@ func IsFileExist(filename string) bool {
 	}
 	return true
 
+}
+
+func Renew() {
+	Bot.Conn.Close()
+	Bot.Login()
+	RefreshList()
 }

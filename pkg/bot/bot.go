@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"qBot/pkg/mjj"
 	"qBot/pkg/qc"
+	"qBot/pkg/qchan"
 	"sync"
 
 	"github.com/Sakurasan/to"
@@ -25,7 +26,10 @@ func Run() {
 
 	for i := len(newsList) - 1; i >= 0; i-- {
 		if to.Int64(LastOrder) < to.Int64(newsList[i][0]) {
-			qc.RadioNews(newsList[i][1] + fmt.Sprintf(UrlTemplate, newsList[i][0]))
+			err := qc.RadioNews(newsList[i][1] + fmt.Sprintf(UrlTemplate, newsList[i][0]))
+			if err != nil {
+				qchan.SendGroup(newsList[i][1]+fmt.Sprintf(UrlTemplate, newsList[i][0]), "808468274")
+			}
 		}
 	}
 
