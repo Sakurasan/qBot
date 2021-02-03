@@ -28,6 +28,7 @@ func Run() {
 		if to.Int64(LastOrder) < to.Int64(newsList[i][0]) {
 			err := qc.RadioNews(newsList[i][1] + fmt.Sprintf(UrlTemplate, newsList[i][0]))
 			if err != nil {
+				qc.Renew()
 				qchan.SendGroup(newsList[i][1]+fmt.Sprintf(UrlTemplate, newsList[i][0]), "808468274")
 			}
 		}

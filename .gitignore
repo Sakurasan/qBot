@@ -4,3 +4,7 @@ qBot
 qBot.yaml
 *.log
 *.tgz
+
+cmd/567
+*.js
+test/qiandao

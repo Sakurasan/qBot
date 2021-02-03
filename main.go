@@ -44,5 +44,6 @@ func main() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, os.Kill)
 	<-ch
+	qc.RadioNews(time.Now().Format("2006-01-02 15:04:05.9999" + " AWSL"))
 	log.Println("AWSL")
 }
