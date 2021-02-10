@@ -10,6 +10,8 @@ import (
 	"log"
 	"os"
 	"qBot/pkg/config"
+	"qBot/pkg/errorsType"
+	"qBot/pkg/qchan"
 	"strconv"
 	"strings"
 	"time"
@@ -182,7 +184,7 @@ func Login() {
 				Elements: []message.IMessageElement{message.NewText("测试信息：消息姬已启动 ")}})
 		}
 	}
-
+	qchan.SendGroup("测试信息：Qmsg已启动 ", "808468274")
 	// defer Bot.Conn.Close()
 
 }
@@ -193,7 +195,9 @@ func RadioNews(msg string) error {
 		if _, ok := GroupMap[int64(v)]; ok {
 			ret := Bot.SendGroupMessage(int64(v), &message.SendingMessage{
 				Elements: []message.IMessageElement{message.NewText(msg)}})
-			if ret == nil || ret.Id == -1 {
+			if ret == nil {
+				return errorsType.ErrNilResp
+			} else if ret.Id == -1 {
 				log.Println("群消息发送失败 message-id", ret.Id,
 					"internal-id", ret.InternalId,
 					"group", ret.GroupCode,

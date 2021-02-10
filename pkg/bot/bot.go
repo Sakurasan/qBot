@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"log"
 	"qBot/pkg/mjj"
 	"qBot/pkg/qc"
 	"qBot/pkg/qchan"
@@ -28,6 +29,7 @@ func Run() {
 		if to.Int64(LastOrder) < to.Int64(newsList[i][0]) {
 			err := qc.RadioNews(newsList[i][1] + fmt.Sprintf(UrlTemplate, newsList[i][0]))
 			if err != nil {
+				log.Println(err)
 				qc.Renew()
 				qchan.SendGroup(newsList[i][1]+fmt.Sprintf(UrlTemplate, newsList[i][0]), "808468274")
 			}
