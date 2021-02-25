@@ -1,12 +1,15 @@
 package qchan
 
-import "testing"
+import (
+	"qBot/tests"
+	"testing"
+)
 
 func TestSend(t *testing.T) {
 	type args struct {
 		msg string
 	}
-	tests := []struct {
+	ts := []struct {
 		name string
 		args args
 	}{
@@ -20,9 +23,10 @@ func TestSend(t *testing.T) {
 			args: args{msg: "梅花13"},
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range ts {
 		t.Run(tt.name, func(t *testing.T) {
 			Send(tt.args.msg)
+			SendGroup(tt.args.msg, tests.Qchan.GroupID)
 		})
 	}
 }

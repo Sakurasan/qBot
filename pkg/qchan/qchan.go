@@ -4,11 +4,12 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"qBot/tests"
 	"strings"
 )
 
 var (
-	key       = "49965840c480ba7ed1dfaa5723dd2bda"
+	key       = tests.Qchan.Key
 	qmsgurl   = "https://qmsg.zendee.cn/send/"
 	qgroupurl = "https://qmsg.zendee.cn/group/"
 )
