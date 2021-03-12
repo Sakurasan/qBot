@@ -3,21 +3,28 @@ package qc
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"image"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"qBot/pkg/config"
 	"qBot/pkg/errorsType"
+	"qBot/pkg/loli"
 	"qBot/pkg/qchan"
+	"qBot/pkg/tb"
+	"qBot/pkg/tts"
+	"qBot/tests"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/valyala/fasthttp"
 	asciiart "github.com/yinghau76/go-ascii-art"
 )
 
@@ -27,8 +34,20 @@ var (
 
 	account, _ = strconv.ParseInt(os.Getenv("account"), 10, 64)
 
-	pwd = os.Getenv("pwd")
-	Bot *client.QQClient
+	pwd      = os.Getenv("pwd")
+	Bot      *client.QQClient
+	mjjChan  = make(chan string, 10)
+	setuChan = make(chan string, 11)
+	setuLock = false
+	setuNum  = 0
+
+	heshuiLock    = false
+	heshuiUrlList = []string{"https://pic3.zhimg.com/80/v2-679a91c6d249517b6e267cd3b07d7ad7_720w.jpg", "https://pic2.zhimg.com/80/v2-200ebdfc2a49bf29414f504d01f57c22_720w.jpg", "https://pic4.zhimg.com/80/v2-f56975d4faa5332cc24c5b0b37c6cfe9_720w.jpg", "https://pic4.zhimg.com/80/v2-f56975d4faa5332cc24c5b0b37c6cfe9_720w.jpg"}
+	moyu          = "https://pic4.zhimg.com/80/v2-981cd99dd2969eaf1ca9b23783eba818_720w.jpg"
+	ghsUrl        = "https://pic4.zhimg.com/80/v2-ebe50b205335ad46bb356999146f1106_720w.jpg"
+	tigangUrl     = "https://pic.diydoutu.com/bq/2067.jpg"
+
+	ttsmap = make(map[int64]bool)
 )
 
 func Init() {
@@ -185,6 +204,7 @@ func Login() {
 		}
 	}
 	qchan.SendGroup("测试信息：Qmsg已启动 ", "808468274")
+	Bot.OnGroupMessage(msgRoute)
 	// defer Bot.Conn.Close()
 
 }
@@ -234,4 +254,226 @@ func Renew() {
 	Bot.Conn.Close()
 	Bot.Login()
 	RefreshList()
+}
+
+func msgRoute(c *client.QQClient, msg *message.GroupMessage) {
+	s := msg.ToString()
+	// log.Printf("%s[%d]:%s[%d] %s\n", msg.GroupName, msg.GroupCode, msg.Sender.Nickname, msg.Sender.Uin, s)
+	for _, m := range msg.Elements {
+		switch m.(type) {
+		case *message.TextElement:
+			s := m.(*message.TextElement).Content
+			if (strings.Contains(s, "。") || strings.Contains(s, ",") || strings.Contains(s, "，")) && ttsmap[msg.GroupCode] != false {
+				// if msg.Sender.Uin == tests.QType.Uin {
+				// 	return
+				// }
+				var tc tts.Config
+				if strings.Contains(s, ",") || strings.Contains(s, "，") {
+					tc.Language = "ja"
+					transt := tts.NewTransT()
+					transt.Target = "ja"
+					transt.Text = s
+					tc.Speak = notNillValve(s, tts.Trans(transt))
+				} else if strings.Contains(s, "。") {
+					tc.Language = "zh-CN"
+					tc.Speak = s
+				}
+
+				voice, err := tts.Speak(tc)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				gv, err := c.UploadGroupPtt(msg.GroupCode, bytes.NewReader(voice.Bytes()))
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(gv))
+				return
+			}
+			switch s {
+			case "menu":
+				menu := `喝水
+提肛
+ghs
+涩图, 瑟图
+女菩萨, 绅士
+老算盘
+, 。 //? 日语：中文
+`
+				c.SendGroupMessage(
+					msg.GroupCode, message.NewSendingMessage().Append(message.NewText(menu)))
+			case "喝水":
+				sm, err := upLoadImgByUrl(c, msg, heshuiUrlList[rand.Intn(len(heshuiUrlList)-1)])
+				if err != nil {
+					return
+				}
+				c.SendGroupMessage(msg.GroupCode, sm)
+			case "提肛":
+				sm, err := upLoadImgByUrl(c, msg, tigangUrl)
+				if err != nil {
+					return
+				}
+				c.SendGroupMessage(msg.GroupCode, sm)
+			case "ghs":
+				sm, err := upLoadImgByUrl(c, msg, ghsUrl)
+				if err != nil {
+					return
+				}
+				c.SendGroupMessage(msg.GroupCode, sm)
+			case "涩图", "瑟图":
+				if !setuLock {
+					var (
+						m   map[string]string
+						err error
+					)
+					if rand.Intn(10)%2 == 0 {
+						m, err = tb.Tao()
+					} else {
+						m, err = tb.Tbimg()
+					}
+
+					if err != nil {
+						c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("没有，滚")))
+						return
+					}
+					imsg, err := upLoadFlashImgByUrl(c, msg, m["pic"])
+					if err != nil {
+						log.Println(err)
+						c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("ghs?哪呢哪呢？")))
+						return
+					}
+					// c.SendGroupMessage(msg.GroupCode, &message.SendingMessage{Elements: imsg})
+					c.SendGroupMessage(msg.GroupCode, imsg)
+				}
+			case "女菩萨", "绅士":
+				if setuLock {
+					c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("ghs?哪呢哪呢？")))
+					return
+				}
+				var (
+					m   map[string]string
+					err error
+				)
+
+				if rand.Intn(10)%2 == 0 {
+					m, err = tb.Tao()
+				} else {
+					m, err = tb.Tbimg()
+				}
+
+				if err != nil {
+					c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("ghs?哪呢哪呢？")))
+					return
+				}
+				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText(m["pic"])))
+			case "老算盘":
+				_url, err := loli.SetuOne()
+				if err != nil {
+					c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("ghs?哪呢哪呢？")))
+				}
+				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText(_url)))
+			case "ping":
+				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("pong")))
+			}
+		}
+		if msg.Sender.Uin == tests.QType.Uin {
+			if s == "涩图开" {
+				setuLock = false
+				return
+			}
+			if s == "涩图关" {
+				setuLock = true
+				return
+			}
+			if s == "tts关" {
+				ttsmap[msg.GroupCode] = false
+				return
+			}
+			if s == "tts开" {
+				ttsmap[msg.GroupCode] = true
+				return
+			}
+			// transt := tts.NewTransT()
+			// transt.Target = "ja"
+			// transt.Text = s
+			// var tc tts.Config
+			// tc.Speak = notNillValve(s, tts.Trans(transt))
+			// if strings.Contains(s, ",") || strings.Contains(s, "，") {
+			// 	tc.Language = "ja"
+			// } else if strings.Contains(s, "。") {
+			// 	tc.Language = "zh-CN"
+			// }
+
+			// voice, err := tts.Speak(tc)
+			// if err != nil {
+			// 	log.Println(err)
+			// 	return
+			// }
+			// gv, err := c.UploadGroupPtt(msg.GroupCode, bytes.NewReader(voice.Bytes()))
+			// if err != nil {
+			// 	fmt.Println(err)
+			// 	return
+			// }
+			// c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(gv))
+			return
+
+		}
+	}
+	// if msg.GroupCode == 808468274 {}
+}
+
+func upLoadImgByUrl(c *client.QQClient, msg *message.GroupMessage, url string) (*message.SendingMessage, error) {
+	_, cc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cc()
+	sm := message.NewSendingMessage()
+	req := &fasthttp.Request{}
+	req.Header.Set("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36")
+	req.SetRequestURI(url)
+	rsp := &fasthttp.Response{}
+	if err := fasthttp.Do(req, rsp); err != nil {
+		return nil, err
+	}
+	img, err := c.UploadGroupImage(msg.GroupCode, bytes.NewReader(rsp.Body()))
+	if err != nil {
+		sm.Append(message.NewText(fmt.Sprintf("上传失败 %s ", err.Error())))
+		return sm, nil
+	}
+	sm.Append(img)
+	return sm, nil
+}
+func upLoadFlashImgByUrl(c *client.QQClient, msg *message.GroupMessage, url string) (*message.SendingMessage, error) {
+	_, cc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cc()
+	sm := message.NewSendingMessage()
+	req := new(fasthttp.Request)
+	req.Header.Set("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36")
+	req.SetRequestURI(url)
+	rsp := new(fasthttp.Response)
+	if err := fasthttp.Do(req, rsp); err != nil {
+		log.Println("fasthttp.Do", err)
+		return nil, err
+	}
+
+	img, err := c.UploadGroupImage(msg.GroupCode, bytes.NewReader(rsp.Body()))
+	if err != nil {
+		sm.Append(message.NewText(fmt.Sprintf("上传失败 %s ", err.Error())))
+		return sm, nil
+	}
+	// if i, ok := img.(*message.GroupImageElement); ok {}
+	sm.Append(&message.GroupFlashPicElement{GroupImageElement: *img})
+
+	return sm, nil
+}
+
+func SetuMsg(c *client.QQClient, msg *message.GroupMessage) {
+
+}
+
+func notNillValve(a, b string) string {
+	if b != "" {
+		return b
+	}
+	return a
 }

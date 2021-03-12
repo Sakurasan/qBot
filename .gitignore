@@ -4,7 +4,12 @@ qBot
 qBot.yaml
 *.log
 *.tgz
-
+pkg/fu/
 cmd/567
 *.js
 test/qiandao
+pkg/qchan/README.md
+tests/
+test/
+pkg/yyest/
+*.mp3
