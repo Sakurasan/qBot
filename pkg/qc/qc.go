@@ -47,7 +47,10 @@ var (
 	ghsUrl        = "https://pic4.zhimg.com/80/v2-ebe50b205335ad46bb356999146f1106_720w.jpg"
 	tigangUrl     = "https://pic.diydoutu.com/bq/2067.jpg"
 
-	ttsmap = make(map[int64]bool)
+	ttsmap   = make(map[int64]bool)
+	clockmap = make(map[int64]bool)
+	watermap = make(map[int64]bool)
+	ppmap    = make(map[int64]bool)
 )
 
 func Init() {
@@ -82,7 +85,6 @@ func checkDevice() {
 }
 
 func Login() {
-
 	console := bufio.NewReader(os.Stdin)
 	readLine := func() (str string) {
 		str, _ = console.ReadString('\n')
@@ -239,6 +241,12 @@ func RefreshList() error {
 	}
 	return Bot.ReloadFriendList()
 }
+func Printmap() {
+	fmt.Println("ttsmap", ttsmap)
+	fmt.Println("clockmap", clockmap)
+	fmt.Println("watermap", watermap)
+	fmt.Println("ppmap", ppmap)
+}
 
 //判断文件是否存在
 func IsFileExist(filename string) bool {
@@ -291,6 +299,24 @@ func msgRoute(c *client.QQClient, msg *message.GroupMessage) {
 				}
 				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(gv))
 				return
+			} else if strings.Contains(s, "clock") {
+				args := strings.Split(s, " ")
+				if len(args) < 2 {
+					return
+					c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("无效指令")))
+					return
+				}
+				switch args[1] {
+				case "喝水":
+					watermap[msg.GroupCode] = true
+				case "喝水关":
+					watermap[msg.GroupCode] = false
+				case "提肛":
+					ppmap[msg.GroupCode] = true
+				case "提肛关":
+					ppmap[msg.GroupCode] = false
+				}
+				return
 			}
 			switch s {
 			case "menu":
@@ -301,6 +327,7 @@ ghs
 女菩萨, 绅士
 老算盘
 , 。 //? 日语：中文
+clock 
 `
 				c.SendGroupMessage(
 					msg.GroupCode, message.NewSendingMessage().Append(message.NewText(menu)))
@@ -372,10 +399,13 @@ ghs
 				_url, err := loli.SetuOne()
 				if err != nil {
 					c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("ghs?哪呢哪呢？")))
+					return
 				}
 				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText(_url)))
+				return
 			case "ping":
 				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("pong")))
+				return
 			}
 		}
 		if msg.Sender.Uin == tests.QType.Uin {
