@@ -38,7 +38,8 @@ func Qclock() {
 					if err != nil {
 						return
 					}
-					Bot.SendGroupMessage(groupCode, sm.Append(message.NewText("\n"+time.Now().Format("2006-01-02 15:04:05"))))
+					sm2, _ := upImgByUrl(Bot, groupCode, "https://i.loli.net/2021/03/13/REphylvQiAsYdPf.gif")
+					Bot.SendGroupMessage(groupCode, sm.Append(message.NewText("\n"+time.Now().Format("2006-01-02 15:04:05"))).Append(sm2))
 				}
 			})
 		}
@@ -71,4 +72,21 @@ func clockImgByUrl(c *client.QQClient, groupCode int64, url string) (*message.Se
 	}
 	sm.Append(img)
 	return sm, nil
+}
+
+func upImgByUrl(c *client.QQClient, groupCode int64, url string) (*message.GroupImageElement, error) {
+	_, cc := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cc()
+	req := &fasthttp.Request{}
+	req.Header.Set("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36")
+	req.SetRequestURI(url)
+	rsp := &fasthttp.Response{}
+	if err := fasthttp.Do(req, rsp); err != nil {
+		return nil, err
+	}
+	img, err := c.UploadGroupImage(groupCode, bytes.NewReader(rsp.Body()))
+	if err != nil {
+		return nil, nil
+	}
+	return img, nil
 }

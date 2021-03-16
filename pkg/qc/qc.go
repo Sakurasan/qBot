@@ -342,7 +342,8 @@ clock
 				if err != nil {
 					return
 				}
-				c.SendGroupMessage(msg.GroupCode, sm)
+				img, _ := upImgByUrl(c, msg.GroupCode, "https://i.loli.net/2021/03/13/REphylvQiAsYdPf.gif")
+				c.SendGroupMessage(msg.GroupCode, sm.Append(img))
 			case "ghs":
 				sm, err := upLoadImgByUrl(c, msg, ghsUrl)
 				if err != nil {
