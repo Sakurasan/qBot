@@ -11,6 +11,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"qBot/pkg/appstore/appso"
 	"qBot/pkg/config"
 	"qBot/pkg/errorsType"
 	"qBot/pkg/loli"
@@ -18,6 +19,7 @@ import (
 	"qBot/pkg/tb"
 	"qBot/pkg/tts"
 	"qBot/tests"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -45,7 +47,8 @@ var (
 	heshuiUrlList = []string{"https://pic3.zhimg.com/80/v2-679a91c6d249517b6e267cd3b07d7ad7_720w.jpg", "https://pic2.zhimg.com/80/v2-200ebdfc2a49bf29414f504d01f57c22_720w.jpg", "https://pic4.zhimg.com/80/v2-f56975d4faa5332cc24c5b0b37c6cfe9_720w.jpg", "https://pic4.zhimg.com/80/v2-f56975d4faa5332cc24c5b0b37c6cfe9_720w.jpg"}
 	moyu          = "https://pic4.zhimg.com/80/v2-981cd99dd2969eaf1ca9b23783eba818_720w.jpg"
 	ghsUrl        = "https://pic4.zhimg.com/80/v2-ebe50b205335ad46bb356999146f1106_720w.jpg"
-	tigangUrl     = "https://pic.diydoutu.com/bq/2067.jpg"
+	tigangUrl     = "https://i.loli.net/2021/03/18/uqTYy3Dz1EewsXH.gif"
+	tigangTmp     = "大家好,我是“提醒提肛小助手”希望此刻看到这条消息的朋友和我一起提肛，避免痔疮健康生活。 明天我会继续来提醒大家，和我一起成为健康菊花的好青年吧!"
 
 	ttsmap   = make(map[int64]bool)
 	clockmap = make(map[int64]bool)
@@ -328,6 +331,7 @@ ghs
 老算盘
 , 。 //? 日语：中文
 clock 
+free mac
 `
 				c.SendGroupMessage(
 					msg.GroupCode, message.NewSendingMessage().Append(message.NewText(menu)))
@@ -338,12 +342,10 @@ clock
 				}
 				c.SendGroupMessage(msg.GroupCode, sm)
 			case "提肛":
-				sm, err := upLoadImgByUrl(c, msg, tigangUrl)
-				if err != nil {
-					return
-				}
-				img, _ := upImgByUrl(c, msg.GroupCode, "https://i.loli.net/2021/03/13/REphylvQiAsYdPf.gif")
-				c.SendGroupMessage(msg.GroupCode, sm.Append(img))
+
+				img1, _ := upImgByUrl(c, msg.GroupCode, tigangUrl)
+				img2, _ := upImgByUrl(c, msg.GroupCode, "https://i.loli.net/2021/03/13/REphylvQiAsYdPf.gif")
+				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText(tigangTmp)).Append(img1).Append(img2))
 			case "ghs":
 				sm, err := upLoadImgByUrl(c, msg, ghsUrl)
 				if err != nil {
@@ -403,6 +405,21 @@ clock
 					return
 				}
 				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText(_url)))
+				return
+			case "free mac":
+				applist, err := appso.XianMian()
+				if err != nil {
+					c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("我是谁?我在哪？")))
+					return
+				}
+				sendmsg := message.NewSendingMessage()
+				for _, v := range applist {
+					desp := strings.ReplaceAll(v.Description, "<br>\n", "")
+					desp = strings.ReplaceAll(desp, " ", "")
+					desp = strings.ReplaceAll(desp, regexp.MustCompile("<imgsrc(.*?)>").FindString(desp), "")
+					sendmsg.Append(message.NewText(v.Title + desp + v.Guid.Text + "\n\n"))
+				}
+				c.SendGroupMessage(msg.GroupCode, sendmsg)
 				return
 			case "ping":
 				c.SendGroupMessage(msg.GroupCode, message.NewSendingMessage().Append(message.NewText("pong")))
